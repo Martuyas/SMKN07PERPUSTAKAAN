@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil - Perpustakaan</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css"> 
+    <style>
+        /* Gaya khusus untuk tampilan profil */
+        .profile-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #007bff;
+            margin-bottom: 15px;
+        }
+        .profile-info h3 { margin: 0; font-size: 20px; color: #333; }
+        .profile-info p { color: #777; margin: 5px 0 0; }
+
+        /* Gaya List Pengaturan */
+        .settings-container { display: flex; flex-direction: column; gap: 10px; }
+        .setting-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            border: none;
+            width: 100%;
+            font-size: 16px;
+        }
+        .setting-btn:hover { background: #f0f7ff; }
+        .setting-btn i { color: #007bff; margin-right: 15px; }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background: white;
+            margin: 15% auto;
+            padding: 20px;
+            width: 85%;
+            max-width: 400px;
+            border-radius: 12px;
+        }
+        .modal-header { font-weight: bold; font-size: 18px; margin-bottom: 15px; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 14px; margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        
+        .btn-action { width: 100%; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .btn-save { background: #007bff; color: white; }
+        .btn-close { background: #eee; color: #333; }
+
+        .history-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .history-table th, .history-table td { border-bottom: 1px solid #eee; padding: 10px; text-align: left; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="side-nav">
+        <a href="index.html" class="nav-item">
+            <span class="material-icons">home</span> Beranda
+        </a>
+        <a href="peminjaman.html" class="nav-item">
+            <span class="material-icons">bookmark</span> Peminjaman
+        </a>
+        <a href="profile.html" class="nav-item active">
+            <span class="material-icons">person</span> Profil
+        </a>
+    </div>
+
+    <div class="header">
+        <div class="header-title">Profil Anda</div>
+    </div>
+
+    <div class="container">
+        <div class="profile-card">
+            <img src="pace pedrok.png" alt="User" class="profile-avatar" onerror="this.src='https://via.placeholder.com/100'">
+            <div class="profile-info">
+                <h3 id="name-display">Admin Perpustakaan</h3>
+                <p id="status-display">Anggota Aktif</p>
+            </div>
+        </div>
+
+        <div class="settings-container">
+            <button class="setting-btn" onclick="openModal('editModal')">
+                <span><span class="material-icons" style="vertical-align: middle; margin-right: 10px;">edit</span>Edit Profil</span>
+                <span class="material-icons">chevron_right</span>
+            </button>
+
+            <button class="setting-btn" onclick="openModal('historyModal')">
+                <span><span class="material-icons" style="vertical-align: middle; margin-right: 10px;">history</span>Riwayat Pinjaman Aktif</span>
+                <span class="material-icons">chevron_right</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Perbarui Profil</div>
+            <div class="input-group">
+                <label>Nama Lengkap</label>
+                <input type="text" id="edit-name">
+            </div>
+            <div class="input-group">
+                <label>Status</label>
+                <input type="text" id="edit-status">
+            </div>
+            <button class="btn-action btn-save" onclick="saveProfile()">Simpan Perubahan</button>
+            <button class="btn-action btn-close" onclick="closeModal('editModal')">Batal</button>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">Buku yang Sedang Dipinjam</div>
+            <div style="max-height: 300px; overflow-y: auto;">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Judul</th>
+                            <th>Tanggal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-list">
+                        </tbody>
+                </table>
+            </div>
+            <button class="btn-action btn-close" style="margin-top: 15px;" onclick="closeModal('historyModal')">Tutup</button>
+        </div>
+    </div>
+
+    <script>
+        // --- LOGIKA MODAL ---
+        function openModal(id) {
+            document.getElementById(id).style.display = "block";
+            if(id === 'editModal') {
+                document.getElementById('edit-name').value = document.getElementById('name-display').innerText;
+                document.getElementById('edit-status').value = document.getElementById('status-display').innerText;
+            }
+            if(id === 'historyModal') {
+                loadHistory();
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = "none";
+        }
+
+        // --- SIMPAN PROFIL KE LOCALSTORAGE ---
+        function saveProfile() {
+            const newName = document.getElementById('edit-name').value;
+            const newStatus = document.getElementById('edit-status').value;
+
+            if(newName && newStatus) {
+                localStorage.setItem('userName', newName);
+                localStorage.setItem('userStatus', newStatus);
+                
+                document.getElementById('name-display').innerText = newName;
+                document.getElementById('status-display').innerText = newStatus;
+                
+                closeModal('editModal');
+                alert('Profil berhasil diupdate!');
+            }
+        }
+
+        // --- LOAD DATA PINJAMAN DARI TAB PEMINJAMAN ---
+        function loadHistory() {
+            const historyList = document.getElementById('history-list');
+            const borrowedBooks = JSON.parse(localStorage.getItem('peminjamanData')) || [];
+
+            if(borrowedBooks.length > 0) {
+                historyList.innerHTML = borrowedBooks.map(book => `
+                    <tr>
+                        <td><strong>${book.title}</strong></td>
+                        <td>${book.borrowDate}</td>
+                    </tr>
+                `).join('');
+            } else {
+                historyList.innerHTML = '<tr><td colspan="2" style="text-align:center;">Tidak ada pinjaman aktif.</td></tr>';
+            }
+        }
+
+        // --- LOAD DATA SAAT HALAMAN DIBUKA ---
+        window.onload = function() {
+            const savedName = localStorage.getItem('userName');
+            const savedStatus = localStorage.getItem('userStatus');
+            if(savedName) document.getElementById('name-display').innerText = savedName;
+            if(savedStatus) document.getElementById('status-display').innerText = savedStatus;
+        };
+
+        // Klik luar modal untuk menutup
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
