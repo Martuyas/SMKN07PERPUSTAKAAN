@@ -1,2 +1,0 @@
-# SMKN07PERPUSTAKAAN
-perpustakaan
